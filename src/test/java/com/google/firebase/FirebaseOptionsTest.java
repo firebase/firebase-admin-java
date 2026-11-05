@@ -116,6 +116,7 @@ public class FirebaseOptionsTest {
             .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
             .build();
     assertNotNull(firebaseOptions.getJsonFactory());
+    assertTrue(firebaseOptions.getJsonFactory() instanceof GsonFactory);
     assertNotNull(firebaseOptions.getHttpTransport());
     assertNotNull(firebaseOptions.getThreadManager());
     assertNull(firebaseOptions.getDatabaseUrl());
@@ -145,6 +146,7 @@ public class FirebaseOptionsTest {
             .build();
 
     assertNotNull(firebaseOptions.getJsonFactory());
+    assertTrue(firebaseOptions.getJsonFactory() instanceof GsonFactory);
     assertNotNull(firebaseOptions.getHttpTransport());
     assertNull(firebaseOptions.getDatabaseUrl());
     assertNull(firebaseOptions.getStorageBucket());

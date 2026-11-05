@@ -16,15 +16,13 @@
 
 package com.google.firebase.internal;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
-
 import java.io.IOException;
 
 /**
@@ -80,15 +78,28 @@ public class ApiClientUtils {
     }
   }
 
+  /**
+   * Returns the default {@link JsonFactory} instance used across the SDK when one is not
+   * explicitly configured via {@link com.google.firebase.FirebaseOptions}.
+   *
+   * @return The default {@link JsonFactory} instance.
+   */
   public static JsonFactory getDefaultJsonFactory() {
-    // Force using the Jackson2 parser for this project for now. Eventually we should switch
-    // to Gson, but there are some issues that's preventing this migration at the moment.
-    // See https://github.com/googleapis/google-api-java-client/issues/1779 for details.
-    return JacksonFactory.getDefaultInstance();
+    return JsonFactoryInstanceHolder.INSTANCE;
   }
 
+  /**
+   * Returns the default {@link HttpTransport} instance used across the SDK when one is not
+   * explicitly configured via {@link com.google.firebase.FirebaseOptions}.
+   *
+   * @return The default {@link HttpTransport} instance.
+   */
   public static HttpTransport getDefaultTransport() {
     return TransportInstanceHolder.INSTANCE;
+  }
+
+  private static class JsonFactoryInstanceHolder {
+    static final JsonFactory INSTANCE = GsonFactory.getDefaultInstance();
   }
 
   private static class TransportInstanceHolder {
