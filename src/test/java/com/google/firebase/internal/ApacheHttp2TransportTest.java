@@ -19,25 +19,44 @@ package com.google.firebase.internal;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpMethods;
+import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.http.LowLevelHttpResponse;
+import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.ByteArrayStreamingContent;
-
+import com.google.api.client.util.GenericData;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.ByteStreams;
+import com.google.firebase.ErrorCode;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseException;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.IncomingHttpResponse;
+import com.google.firebase.TestOnlyImplFirebaseTrampolines;
+import com.google.firebase.auth.MockGoogleCredentials;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
-
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hc.client5.http.async.HttpAsyncClient;
 import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
 import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
@@ -48,7 +67,7 @@ import org.apache.hc.core5.concurrent.FutureCallback;
 import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.http.EntityDetails;
+import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpHost;
@@ -65,13 +84,23 @@ import org.apache.hc.core5.http.message.BasicHttpResponse;
 import org.apache.hc.core5.http.nio.AsyncPushConsumer;
 import org.apache.hc.core5.http.nio.AsyncRequestProducer;
 import org.apache.hc.core5.http.nio.AsyncResponseConsumer;
+import org.apache.hc.core5.http.nio.DataStreamChannel;
 import org.apache.hc.core5.http.nio.HandlerFactory;
 import org.apache.hc.core5.http.protocol.HttpContext;
 import org.apache.hc.core5.http.protocol.HttpProcessorBuilder;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class ApacheHttp2TransportTest {
+  private static final ImmutableMap<String, Object> TEST_PAYLOAD =
+      ImmutableMap.<String, Object>of("foo", "bar");
+
+  @After
+  public void tearDown() {
+    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+  }
+
   @Test
   public void testContentLengthSet() throws Exception {
     SimpleRequestBuilder requestBuilder = SimpleRequestBuilder.create(HttpMethods.POST)
@@ -451,7 +480,398 @@ public class ApacheHttp2TransportTest {
         Assert.fail("Expected IOException on read timeout");
       } catch (IOException e) {
         assertEquals("Stream exception in request", e.getMessage());
+      } finally {
+        transport.shutdown();
       }
+    }
+  }
+
+  @Test(timeout = 10_000L)
+  public void testUnauthorizedGetRequest() throws Exception {
+    final AtomicReference<String> receivedMethod = new AtomicReference<>();
+    final AtomicReference<String> receivedAuth = new AtomicReference<>();
+    final HttpRequestHandler handler = new HttpRequestHandler() {
+      @Override
+      public void handle(
+          ClassicHttpRequest request, ClassicHttpResponse response, HttpContext context) {
+        receivedMethod.set(request.getMethod());
+        Header authHeader = request.getFirstHeader(HttpHeaders.AUTHORIZATION);
+        if (authHeader != null) {
+          receivedAuth.set(authHeader.getValue());
+        }
+        byte[] responseData = "{\"result\":\"ok\"}".getBytes(StandardCharsets.UTF_8);
+        response.setCode(HttpStatus.SC_OK);
+        response.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(responseData.length));
+        response.setEntity(new ByteArrayEntity(responseData, ContentType.APPLICATION_JSON));
+      }
+    };
+
+    try (FakeServer server = new FakeServer(handler)) {
+      HttpTransport transport = new ApacheHttp2Transport();
+      try {
+        FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
+            .setCredentials(new MockGoogleCredentials("test_token"))
+            .setHttpTransport(transport)
+            .build());
+        String testUrl = "http://localhost:" + server.getPort() + "/get";
+        HttpRequestInfo request = HttpRequestInfo.buildGetRequest(testUrl);
+        IncomingHttpResponse response = createHttpClient(false, app).send(request);
+        assertEquals(200, response.getStatusCode());
+        assertEquals("{\"result\":\"ok\"}", response.getContent());
+        assertEquals("GET", receivedMethod.get());
+        assertNull(receivedAuth.get());
+      } finally {
+        transport.shutdown();
+      }
+    }
+  }
+
+  @Test(timeout = 10_000L)
+  public void testUnauthorizedPostRequest() throws Exception {
+    final AtomicReference<String> receivedMethod = new AtomicReference<>();
+    final AtomicReference<String> receivedAuth = new AtomicReference<>();
+    final AtomicReference<String> receivedContentType = new AtomicReference<>();
+    final AtomicReference<String> receivedBody = new AtomicReference<>();
+    final HttpRequestHandler handler = new HttpRequestHandler() {
+      @Override
+      public void handle(
+          ClassicHttpRequest request, ClassicHttpResponse response, HttpContext context)
+          throws IOException {
+        receivedMethod.set(request.getMethod());
+        Header authHeader = request.getFirstHeader(HttpHeaders.AUTHORIZATION);
+        if (authHeader != null) {
+          receivedAuth.set(authHeader.getValue());
+        }
+        if (request.getEntity() != null) {
+          receivedContentType.set(request.getEntity().getContentType());
+          byte[] requestBytes = ByteStreams.toByteArray(request.getEntity().getContent());
+          receivedBody.set(new String(requestBytes, StandardCharsets.UTF_8));
+        }
+        byte[] responseData = "{\"data\":\"{\\\"foo\\\":\\\"bar\\\"}\"}"
+            .getBytes(StandardCharsets.UTF_8);
+        response.setCode(HttpStatus.SC_OK);
+        response.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(responseData.length));
+        response.setEntity(new ByteArrayEntity(responseData, ContentType.APPLICATION_JSON));
+      }
+    };
+
+    try (FakeServer server = new FakeServer(handler)) {
+      HttpTransport transport = new ApacheHttp2Transport();
+      try {
+        FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
+            .setCredentials(new MockGoogleCredentials("test_token"))
+            .setHttpTransport(transport)
+            .build());
+        String testUrl = "http://localhost:" + server.getPort() + "/post";
+        HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(testUrl, TEST_PAYLOAD);
+        GenericData body = createHttpClient(false, app).sendAndParse(request, GenericData.class);
+        assertEquals("{\"foo\":\"bar\"}", body.get("data"));
+        assertEquals("POST", receivedMethod.get());
+        assertNull(receivedAuth.get());
+        assertNotNull(receivedContentType.get());
+        assertTrue(receivedContentType.get().startsWith("application/json"));
+        assertEquals("{\"foo\":\"bar\"}", receivedBody.get());
+      } finally {
+        transport.shutdown();
+      }
+    }
+  }
+
+  @Test(timeout = 10_000L)
+  public void testAuthorizedPostRequest() throws Exception {
+    final AtomicReference<String> receivedMethod = new AtomicReference<>();
+    final AtomicReference<String> receivedAuth = new AtomicReference<>();
+    final AtomicReference<String> receivedContentType = new AtomicReference<>();
+    final AtomicReference<String> receivedBody = new AtomicReference<>();
+    final HttpRequestHandler handler = new HttpRequestHandler() {
+      @Override
+      public void handle(
+          ClassicHttpRequest request, ClassicHttpResponse response, HttpContext context)
+          throws IOException {
+        receivedMethod.set(request.getMethod());
+        Header authHeader = request.getFirstHeader(HttpHeaders.AUTHORIZATION);
+        if (authHeader != null) {
+          receivedAuth.set(authHeader.getValue());
+        }
+        if (request.getEntity() != null) {
+          receivedContentType.set(request.getEntity().getContentType());
+          byte[] requestBytes = ByteStreams.toByteArray(request.getEntity().getContent());
+          receivedBody.set(new String(requestBytes, StandardCharsets.UTF_8));
+        }
+        byte[] responseData = "{\"result\":\"ok\"}".getBytes(StandardCharsets.UTF_8);
+        response.setCode(HttpStatus.SC_OK);
+        response.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(responseData.length));
+        response.setEntity(new ByteArrayEntity(responseData, ContentType.APPLICATION_JSON));
+      }
+    };
+
+    try (FakeServer server = new FakeServer(handler)) {
+      HttpTransport transport = new ApacheHttp2Transport();
+      try {
+        FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
+            .setCredentials(new MockGoogleCredentials("test_token"))
+            .setHttpTransport(transport)
+            .build());
+        String testUrl = "http://localhost:" + server.getPort() + "/post";
+        HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(testUrl, TEST_PAYLOAD);
+        GenericData body = createHttpClient(true, app).sendAndParse(request, GenericData.class);
+        assertEquals("ok", body.get("result"));
+        assertEquals("POST", receivedMethod.get());
+        assertEquals("Bearer test_token", receivedAuth.get());
+        assertNotNull(receivedContentType.get());
+        assertTrue(receivedContentType.get().startsWith("application/json"));
+        assertEquals("{\"foo\":\"bar\"}", receivedBody.get());
+      } finally {
+        transport.shutdown();
+      }
+    }
+  }
+
+  @Test(timeout = 10_000L)
+  public void testReadTimeoutAuthorizedGet() throws Exception {
+    final CountDownLatch requestReceived = new CountDownLatch(1);
+    final CountDownLatch releaseResponse = new CountDownLatch(1);
+    final AtomicReference<String> receivedAuth = new AtomicReference<>();
+    final HttpRequestHandler handler = new HttpRequestHandler() {
+      @Override
+      public void handle(
+          ClassicHttpRequest request, ClassicHttpResponse response, HttpContext context) {
+        Header authHeader = request.getFirstHeader(HttpHeaders.AUTHORIZATION);
+        if (authHeader != null) {
+          receivedAuth.set(authHeader.getValue());
+        }
+        requestReceived.countDown();
+        try {
+          releaseResponse.await(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+        response.setCode(HttpStatus.SC_OK);
+      }
+    };
+
+    try (FakeServer server = new FakeServer(handler)) {
+      HttpTransport transport = new ApacheHttp2Transport();
+      try {
+        FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
+            .setCredentials(new MockGoogleCredentials("test_token"))
+            .setReadTimeout(100)
+            .setHttpTransport(transport)
+            .build());
+        String testUrl = "http://localhost:" + server.getPort() + "/delay";
+        HttpRequestInfo request = HttpRequestInfo.buildGetRequest(testUrl);
+
+        try {
+          createHttpClient(true, app).send(request);
+          fail("No exception thrown for HTTP error response");
+        } catch (FirebaseException e) {
+          assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
+          assertEquals("IO error: Stream exception in request", e.getMessage());
+          assertNull(e.getHttpResponse());
+        }
+        assertTrue(requestReceived.await(1, TimeUnit.SECONDS));
+        assertEquals("Bearer test_token", receivedAuth.get());
+      } finally {
+        releaseResponse.countDown();
+        transport.shutdown();
+      }
+    }
+  }
+
+  @Test(timeout = 10_000L)
+  public void testReadTimeoutAuthorizedPost() throws Exception {
+    final CountDownLatch requestReceived = new CountDownLatch(1);
+    final CountDownLatch releaseResponse = new CountDownLatch(1);
+    final AtomicReference<String> receivedAuth = new AtomicReference<>();
+    final AtomicReference<String> receivedBody = new AtomicReference<>();
+    final HttpRequestHandler handler = new HttpRequestHandler() {
+      @Override
+      public void handle(
+          ClassicHttpRequest request, ClassicHttpResponse response, HttpContext context)
+          throws IOException {
+        Header authHeader = request.getFirstHeader(HttpHeaders.AUTHORIZATION);
+        if (authHeader != null) {
+          receivedAuth.set(authHeader.getValue());
+        }
+        if (request.getEntity() != null) {
+          byte[] requestBytes = ByteStreams.toByteArray(request.getEntity().getContent());
+          receivedBody.set(new String(requestBytes, StandardCharsets.UTF_8));
+        }
+        requestReceived.countDown();
+        try {
+          releaseResponse.await(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+        response.setCode(HttpStatus.SC_OK);
+      }
+    };
+
+    try (FakeServer server = new FakeServer(handler)) {
+      HttpTransport transport = new ApacheHttp2Transport();
+      try {
+        FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
+            .setCredentials(new MockGoogleCredentials("test_token"))
+            .setReadTimeout(100)
+            .setHttpTransport(transport)
+            .build());
+        String testUrl = "http://localhost:" + server.getPort() + "/delay";
+        HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(testUrl, TEST_PAYLOAD);
+
+        try {
+          createHttpClient(true, app).send(request);
+          fail("No exception thrown for HTTP error response");
+        } catch (FirebaseException e) {
+          assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
+          assertEquals("IO error: Stream exception in request", e.getMessage());
+          assertNull(e.getHttpResponse());
+        }
+        assertTrue(requestReceived.await(1, TimeUnit.SECONDS));
+        assertEquals("Bearer test_token", receivedAuth.get());
+        assertEquals("{\"foo\":\"bar\"}", receivedBody.get());
+      } finally {
+        releaseResponse.countDown();
+        transport.shutdown();
+      }
+    }
+  }
+
+  @Test(timeout = 10_000L)
+  public void testWriteTimeoutAuthorizedGet() throws IOException {
+    final AtomicReference<Future<?>> responseFutureRef = new AtomicReference<>();
+    CloseableHttpAsyncClient stalledClient = new MockApacheHttp2AsyncClient() {
+      @Override
+      protected <T> Future<T> doExecute(
+          HttpHost target,
+          AsyncRequestProducer requestProducer,
+          AsyncResponseConsumer<T> responseConsumer,
+          HandlerFactory<AsyncPushConsumer> pushHandlerFactory,
+          HttpContext context,
+          FutureCallback<T> callback) {
+        CompletableFuture<T> future = new CompletableFuture<>();
+        responseFutureRef.set(future);
+        return future;
+      }
+    };
+
+    HttpTransport transport = new ApacheHttp2Transport(stalledClient);
+    try {
+      FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
+          .setCredentials(new MockGoogleCredentials("test_token"))
+          .setWriteTimeout(100)
+          .setHttpTransport(transport)
+          .build());
+      HttpRequestInfo request = HttpRequestInfo.buildGetRequest("https://example.com/get");
+
+      try {
+        createHttpClient(true, app).send(request);
+        fail("No exception thrown for HTTP error response");
+      } catch (FirebaseException e) {
+        assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
+        assertEquals("IO error: Write Timeout", e.getMessage());
+        assertNull(e.getHttpResponse());
+        assertTrue(e.getCause() instanceof IOException);
+        assertTrue(e.getCause().getCause() instanceof TimeoutException);
+      }
+      assertNotNull(responseFutureRef.get());
+      assertTrue(responseFutureRef.get().isCancelled());
+    } finally {
+      transport.shutdown();
+    }
+  }
+
+  @Test(timeout = 10_000L)
+  public void testWriteTimeoutAuthorizedPost() throws IOException {
+    final AtomicInteger bytesOffered = new AtomicInteger();
+    final AtomicReference<Future<?>> responseFutureRef = new AtomicReference<>();
+    CloseableHttpAsyncClient backpressuredClient = new MockApacheHttp2AsyncClient() {
+      @Override
+      protected <T> Future<T> doExecute(
+          HttpHost target,
+          AsyncRequestProducer requestProducer,
+          AsyncResponseConsumer<T> responseConsumer,
+          HandlerFactory<AsyncPushConsumer> pushHandlerFactory,
+          HttpContext context,
+          FutureCallback<T> callback) {
+        try {
+          requestProducer.produce(new DataStreamChannel() {
+            @Override
+            public void requestOutput() {}
+
+            @Override
+            public int write(ByteBuffer src) {
+              bytesOffered.set(src.remaining());
+              return 0;
+            }
+
+            @Override
+            public void endStream() {}
+
+            @Override
+            public void endStream(List<? extends Header> trailers) {}
+          });
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        CompletableFuture<T> future = new CompletableFuture<>();
+        responseFutureRef.set(future);
+        return future;
+      }
+    };
+
+    HttpTransport transport = new ApacheHttp2Transport(backpressuredClient);
+    try {
+      FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
+          .setCredentials(new MockGoogleCredentials("test_token"))
+          .setWriteTimeout(100)
+          .setHttpTransport(transport)
+          .build());
+      HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(
+          "https://example.com/post", TEST_PAYLOAD);
+
+      try {
+        createHttpClient(true, app).send(request);
+        fail("No exception thrown for HTTP error response");
+      } catch (FirebaseException e) {
+        assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
+        assertEquals("IO error: Write Timeout", e.getMessage());
+        assertNull(e.getHttpResponse());
+        assertTrue(e.getCause() instanceof IOException);
+        assertTrue(e.getCause().getCause() instanceof TimeoutException);
+      }
+      assertEquals("{\"foo\":\"bar\"}".length(), bytesOffered.get());
+      assertNotNull(responseFutureRef.get());
+      assertTrue(responseFutureRef.get().isCancelled());
+    } finally {
+      transport.shutdown();
+    }
+  }
+
+  private static ErrorHandlingHttpClient<FirebaseException> createHttpClient(
+      boolean authorized, FirebaseApp app) {
+    HttpRequestFactory requestFactory = authorized
+        ? ApiClientUtils.newAuthorizedRequestFactory(app)
+        : ApiClientUtils.newUnauthorizedRequestFactory(app);
+    JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
+    return new ErrorHandlingHttpClient<>(requestFactory, jsonFactory, new TestHttpErrorHandler());
+  }
+
+  private static class TestHttpErrorHandler implements HttpErrorHandler<FirebaseException> {
+    @Override
+    public FirebaseException handleIOException(IOException e) {
+      return new FirebaseException(ErrorCode.UNKNOWN, "IO error: " + e.getMessage(), e);
+    }
+
+    @Override
+    public FirebaseException handleHttpResponseException(
+        HttpResponseException e, IncomingHttpResponse response) {
+      return new FirebaseException(
+          ErrorCode.INTERNAL, "Example error message: " + e.getContent(), e, response);
+    }
+
+    @Override
+    public FirebaseException handleParseException(IOException e, IncomingHttpResponse response) {
+      return new FirebaseException(ErrorCode.UNKNOWN, "Parse error", e, response);
     }
   }
 

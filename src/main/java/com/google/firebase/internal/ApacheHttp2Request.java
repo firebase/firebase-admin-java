@@ -121,7 +121,8 @@ final class ApacheHttp2Request extends LowLevelHttpRequest {
         writeFuture.get(writeTimeout, TimeUnit.MILLISECONDS);
       }
     } catch (TimeoutException e) {
-      throw new IOException("Write Timeout", e.getCause());
+      responseFuture.cancel(true);
+      throw new IOException("Write Timeout", e);
     } catch (Exception e) {
       throw new IOException("Exception in write", e.getCause());
     }
