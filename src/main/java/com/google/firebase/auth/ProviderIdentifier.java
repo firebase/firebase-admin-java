@@ -22,7 +22,7 @@ import com.google.firebase.internal.NonNull;
 /**
  * Used for looking up an account by provider.
  *
- * @see {FirebaseAuth#getUsers}
+ * @see FirebaseAuth#getUsers
  */
 public final class ProviderIdentifier extends UserIdentifier {
   private final String providerId;

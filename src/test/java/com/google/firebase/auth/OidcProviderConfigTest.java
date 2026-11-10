@@ -93,14 +93,14 @@ public class OidcProviderConfigTest {
   public void testCreateRequest() throws IOException {
     OidcProviderConfig.CreateRequest createRequest = new OidcProviderConfig.CreateRequest();
     createRequest
-      .setProviderId("oidc.provider-id")
-      .setDisplayName("DISPLAY_NAME")
-      .setEnabled(false)
-      .setClientId("CLIENT_ID")
-      .setClientSecret("CLIENT_SECRET")
-      .setIssuer("https://oidc.com/issuer")
-      .setCodeResponseType(true)
-      .setIdTokenResponseType(false);
+        .setProviderId("oidc.provider-id")
+        .setDisplayName("DISPLAY_NAME")
+        .setEnabled(false)
+        .setClientId("CLIENT_ID")
+        .setClientSecret("CLIENT_SECRET")
+        .setIssuer("https://oidc.com/issuer")
+        .setCodeResponseType(true)
+        .setIdTokenResponseType(false);
 
     assertEquals("oidc.provider-id", createRequest.getProviderId());
     Map<String,Object> properties = createRequest.getProperties();
@@ -189,13 +189,13 @@ public class OidcProviderConfigTest {
     OidcProviderConfig.UpdateRequest updateRequest =
         new OidcProviderConfig.UpdateRequest("oidc.provider-id");
     updateRequest
-      .setDisplayName("DISPLAY_NAME")
-      .setEnabled(false)
-      .setClientId("CLIENT_ID")
-      .setClientSecret("CLIENT_SECRET")
-      .setIssuer("https://oidc.com/issuer")
-      .setCodeResponseType(true)
-      .setIdTokenResponseType(false);
+        .setDisplayName("DISPLAY_NAME")
+        .setEnabled(false)
+        .setClientId("CLIENT_ID")
+        .setClientSecret("CLIENT_SECRET")
+        .setIssuer("https://oidc.com/issuer")
+        .setCodeResponseType(true)
+        .setIdTokenResponseType(false);
 
     assertEquals("oidc.provider-id", updateRequest.getProviderId());
     Map<String,Object> properties = updateRequest.getProperties();

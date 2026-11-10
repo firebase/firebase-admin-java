@@ -257,7 +257,7 @@ public class AbstractPlatformErrorHandlerTest {
 
   private ErrorHandlingHttpClient<MockFirebaseException> createHttpClient(
       final IOException exception) {
-    MockHttpTransport transport = new MockHttpTransport(){
+    MockHttpTransport transport = new MockHttpTransport() {
       @Override
       public LowLevelHttpRequest buildRequest(String method, String url) throws IOException {
         throw exception;
