@@ -61,7 +61,7 @@
         <skipTests>false</skipTests>
         <skipUTs>${skipTests}</skipUTs>
         <skipITs>${skipTests}</skipITs>
-        <netty.version>4.2.19.Final</netty.version>
+        <netty.version>4.2.20.Final</netty.version>
     </properties>
 
     <scm>
@@ -187,7 +187,7 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.8.15</version>
+                        <version>0.8.16</version>
                         <executions>
                             <execution>
                                 <id>pre-unit-test</id>
@@ -383,7 +383,7 @@
             <dependency>
                 <groupId>com.google.cloud</groupId>
                 <artifactId>libraries-bom</artifactId>
-                <version>26.90.0</version>
+                <version>26.93.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
