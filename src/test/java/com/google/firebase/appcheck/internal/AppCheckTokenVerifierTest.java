@@ -213,6 +213,27 @@ public class AppCheckTokenVerifierTest {
   }
 
   @Test
+  public void testVerifyToken_WithConsumeFalse_DoesNotCallBackend() throws Exception {
+    when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(claims);
+
+    MockHttpTransport transport = new MockHttpTransport();
+    AppCheckTokenVerifier customVerifier = new AppCheckTokenVerifier(
+        FirebaseApp.getInstance(),
+        transport.createRequestFactory(),
+        ApiClientUtils.getDefaultJsonFactory(),
+        mockJwtProcessor);
+
+    VerifyAppCheckTokenOptions options =
+        VerifyAppCheckTokenOptions.builder().setConsume(false).build();
+    VerifyAppCheckTokenResponse response =
+        customVerifier.verifyToken(createToken(header, claims), options);
+
+    assertNull(transport.getLowLevelHttpRequest());
+    assertEquals(APP_ID, response.getAppId());
+    assertFalse(response.isAlreadyConsumed().isPresent());
+  }
+
+  @Test
   public void testVerifyToken_WithConsumeOption_SendsCorrectRequest() throws Exception {
     when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(claims);
 
