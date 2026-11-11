@@ -333,6 +333,9 @@ public class AppCheckTokenVerifier {
       throw unexpectedResponse("Expected a JSON object.", response, e);
     }
 
+    if (body == null) {
+      throw unexpectedResponse("Expected a JSON object.", response, null);
+    }
     Object alreadyConsumed = body.get("alreadyConsumed");
     if (alreadyConsumed == null) {
       return false;
