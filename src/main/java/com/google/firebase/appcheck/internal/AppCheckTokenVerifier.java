@@ -77,7 +77,6 @@ public class AppCheckTokenVerifier {
   private static final Map<String, String> COMMON_HEADERS =
       ImmutableMap.of("X-Firebase-Client", "fire-admin-java/" + SdkUtils.getVersion());
 
-  private final FirebaseApp app;
   private final String projectId;
   private final ErrorHandlingHttpClient<FirebaseAppCheckException> httpClient;
   private final DefaultJWTProcessor<SecurityContext> jwtProcessor;
@@ -96,7 +95,7 @@ public class AppCheckTokenVerifier {
       HttpRequestFactory requestFactory,
       JsonFactory jsonFactory,
       DefaultJWTProcessor<SecurityContext> jwtProcessor) {
-    this.app = checkNotNull(app, "FirebaseApp must not be null");
+    checkNotNull(app, "FirebaseApp must not be null");
     this.projectId = getProjectId(app);
     checkNotNull(requestFactory, "HttpRequestFactory must not be null");
     checkNotNull(jsonFactory, "JsonFactory must not be null");
