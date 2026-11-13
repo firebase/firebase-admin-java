@@ -127,7 +127,7 @@ public class ApiClientUtilsTest {
 
   @Test
   public void testDisconnectWithErrorSuppression() throws IOException {
-    MockLowLevelHttpResponse lowLevelResponse = new MockLowLevelHttpResponse(){
+    MockLowLevelHttpResponse lowLevelResponse = new MockLowLevelHttpResponse() {
       @Override
       public void disconnect() throws IOException {
         super.disconnect();

@@ -136,7 +136,7 @@ public class RetryInitializerTest {
         retryOnIOAndServiceUnavailableErrors(sleeper));
 
     final AtomicInteger counter = new AtomicInteger(0);
-    MockLowLevelHttpRequest failingRequest = new MockLowLevelHttpRequest(){
+    MockLowLevelHttpRequest failingRequest = new MockLowLevelHttpRequest() {
       @Override
       public LowLevelHttpResponse execute() throws IOException {
         if (counter.getAndIncrement() < 2) {

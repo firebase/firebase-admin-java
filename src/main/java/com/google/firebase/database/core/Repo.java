@@ -648,16 +648,16 @@ public class Repo implements PersistentConnection.Delegate {
     DatabaseReference watchRef = InternalHelpers.createReference(this, path);
     ValueEventListener listener =
         new ValueEventListener() {
-      @Override
-      public void onDataChange(DataSnapshot snapshot) {
-        // No-op. We don't care, this is just to make sure we have a listener outstanding
-      }
+          @Override
+          public void onDataChange(DataSnapshot snapshot) {
+            // No-op. We don't care, this is just to make sure we have a listener outstanding
+          }
 
-      @Override
-      public void onCancelled(DatabaseError error) {
-        // Also a no-op? We'll cancel the transaction in this case
-      }
-    };
+          @Override
+          public void onCancelled(DatabaseError error) {
+            // Also a no-op? We'll cancel the transaction in this case
+          }
+        };
     addEventCallback(new ValueEventRegistration(this, listener, watchRef.getSpec()));
 
     TransactionData transaction =

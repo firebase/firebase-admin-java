@@ -196,7 +196,7 @@ public class ListProviderConfigsPage<T extends ProviderConfig> implements Page<T
   interface ProviderConfigSource<T extends ProviderConfig> {
     @NonNull
     ListProviderConfigsResponse<T> fetch(int maxResults, String pageToken)
-      throws FirebaseAuthException;
+        throws FirebaseAuthException;
   }
 
   static class DefaultOidcProviderConfigSource implements ProviderConfigSource<OidcProviderConfig> {

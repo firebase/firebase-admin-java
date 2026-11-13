@@ -66,9 +66,9 @@ public class TenantTest {
   public void testUpdateRequestFromTenantId() throws IOException {
     Tenant.UpdateRequest updateRequest = new Tenant.UpdateRequest("TENANT_ID");
     updateRequest
-      .setDisplayName("DISPLAY_NAME")
-      .setPasswordSignInAllowed(false)
-      .setEmailLinkSignInEnabled(true);
+        .setDisplayName("DISPLAY_NAME")
+        .setPasswordSignInAllowed(false)
+        .setEmailLinkSignInEnabled(true);
 
     assertEquals("TENANT_ID", updateRequest.getTenantId());
     Map<String,Object> properties = updateRequest.getProperties();
@@ -101,9 +101,9 @@ public class TenantTest {
   public void testCreateRequest() throws IOException {
     Tenant.CreateRequest createRequest = new Tenant.CreateRequest();
     createRequest
-      .setDisplayName("DISPLAY_NAME")
-      .setPasswordSignInAllowed(false)
-      .setEmailLinkSignInEnabled(true);
+        .setDisplayName("DISPLAY_NAME")
+        .setPasswordSignInAllowed(false)
+        .setEmailLinkSignInEnabled(true);
 
     Map<String,Object> properties = createRequest.getProperties();
     assertEquals(properties.size(), 3);

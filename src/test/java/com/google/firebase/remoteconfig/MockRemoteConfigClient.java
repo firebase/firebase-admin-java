@@ -18,7 +18,7 @@ package com.google.firebase.remoteconfig;
 
 import com.google.firebase.remoteconfig.internal.TemplateResponse.ListVersionsResponse;
 
-public class MockRemoteConfigClient implements FirebaseRemoteConfigClient{
+public class MockRemoteConfigClient implements FirebaseRemoteConfigClient {
 
   private final Template resultTemplate;
   private final String resultServerTemplate;
