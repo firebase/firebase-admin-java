@@ -16,15 +16,19 @@
 
 package com.google.firebase.cloud;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
+import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
@@ -125,5 +129,35 @@ public class StorageClientTest {
     StorageClient client = new StorageClient(app, mockStorage);
     assertSame(mockBucket, client.bucket());
     assertSame(mockBucket, client.bucket("mock-bucket-name"));
+  }
+
+  @Test
+  public void testAbsentStorageOptions() throws Exception {
+    String projectId = "test-proj";
+    FirebaseOptions options = FirebaseOptions.builder()
+        .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
+        .setProjectId(projectId)
+        .build();
+
+    FirebaseApp.initializeApp(options);
+    Storage storage = StorageClient.getStorage();
+    assertEquals(projectId, storage.getOptions().getProjectId());
+    assertEquals("https://storage.googleapis.com", storage.getOptions().getHost());
+  }
+
+  @Test
+  public void testStorageOptions() throws IOException {
+    FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
+        .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
+        .setProjectId("explicit-project-id")
+        .setStorageOptions(StorageOptions.newBuilder()
+          .setHost("explicit-host")
+          .build())
+        .build());
+    Storage storage1 = StorageClient.getStorage(app);
+    assertEquals("explicit-project-id", storage1.getOptions().getProjectId());
+    assertEquals("explicit-host", storage1.getOptions().getHost());
+
+    assertSame(storage1, StorageClient.getStorage());
   }
 }
