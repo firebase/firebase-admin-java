@@ -310,7 +310,7 @@ public class FirebaseMessaging {
    *     no failures are only indicated by a {@link BatchResponse}.
    */
   public BatchResponse sendEachForMulticast(@NonNull MulticastMessage message, boolean dryRun)
-    throws FirebaseMessagingException {
+      throws FirebaseMessagingException {
     checkNotNull(message, "multicast message must not be null");
     return sendEach(message.getMessageList(), dryRun);
   }

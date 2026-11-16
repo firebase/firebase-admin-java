@@ -43,14 +43,30 @@
         <property name="eachLine" value="true"/>
     </module>
 
-    <module name="SuppressionCommentFilter">
+    <module name="SuppressWithPlainTextCommentFilter">
       <property name="offCommentFormat" value="CSOFF\: ([\w\|]+)"/>
       <property name="onCommentFormat" value="CSON\: ([\w\|]+)"/>
       <property name="checkFormat" value="$1"/>
     </module>
 
+    <module name="SuppressionSingleFilter">
+        <property name="checks" value="CustomImportOrder"/>
+        <property name="message" value="^Extra separation in import group"/>
+    </module>
+
+    <module name="LineLength">
+        <property name="fileExtensions" value="java"/>
+        <property name="max" value="100"/>
+        <property name="ignorePattern"
+                  value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
+    </module>
+
     <module name="TreeWalker">
-        <module name="FileContentsHolder"/>
+        <module name="SuppressionCommentFilter">
+            <property name="offCommentFormat" value="CSOFF\: ([\w\|]+)"/>
+            <property name="onCommentFormat" value="CSON\: ([\w\|]+)"/>
+            <property name="checkFormat" value="$1"/>
+        </module>
         <module name="OuterTypeFilename"/>
         <module name="IllegalTokenText">
             <property name="tokens" value="STRING_LITERAL, CHAR_LITERAL"/>
@@ -64,11 +80,6 @@
             <property name="allowByTailComment" value="true"/>
             <property name="allowNonPrintableEscapes" value="true"/>
         </module>
-        <module name="LineLength">
-            <property name="max" value="100"/>
-            <property name="ignorePattern"
-                      value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
-        </module>
         <module name="AvoidStarImport"/>
         <module name="OneTopLevelClass"/>
         <module name="NoLineWrap"/>
@@ -78,22 +89,26 @@
                       value="LITERAL_TRY, LITERAL_FINALLY, LITERAL_IF, LITERAL_ELSE, LITERAL_SWITCH"/>
         </module>
         <module name="NeedBraces"/>
-        <module name="LeftCurly">
-            <property name="maxLineLength" value="100"/>
-        </module>
+        <module name="LeftCurly"/>
         <module name="RightCurly">
             <property name="id" value="RightCurlySame"/>
             <property name="tokens"
-                      value="LITERAL_TRY, LITERAL_CATCH, LITERAL_FINALLY, LITERAL_IF, LITERAL_ELSE"/>
+                      value="LITERAL_TRY, LITERAL_CATCH, LITERAL_FINALLY, LITERAL_IF, LITERAL_ELSE, LITERAL_DO"/>
         </module>
         <module name="RightCurly">
             <property name="id" value="RightCurlyAlone"/>
             <property name="option" value="alone"/>
             <property name="tokens"
-                      value="CLASS_DEF, METHOD_DEF, CTOR_DEF, LITERAL_FOR, LITERAL_WHILE, LITERAL_DO, STATIC_INIT, INSTANCE_INIT"/>
+                      value="CLASS_DEF, METHOD_DEF, CTOR_DEF, LITERAL_FOR, LITERAL_WHILE, STATIC_INIT, INSTANCE_INIT"/>
+        </module>
+        <module name="SuppressionXpathSingleFilter">
+            <property name="id" value="RightCurlyAlone"/>
+            <property name="query" value="//RCURLY[parent::SLIST[count(./*)=1]
+                                           or preceding-sibling::*[last()][self::LCURLY]]"/>
         </module>
         <module name="WhitespaceAround">
             <property name="allowEmptyConstructors" value="true"/>
+            <property name="allowEmptyLambdas" value="true"/>
             <property name="allowEmptyMethods" value="true"/>
             <property name="allowEmptyTypes" value="true"/>
             <property name="allowEmptyLoops" value="true"/>
@@ -186,7 +201,9 @@
             <property name="allowedAbbreviationLength" value="4"/>
         </module>
         <module name="OverloadMethodsDeclarationOrder"/>
-        <module name="VariableDeclarationUsageDistance"/>
+        <module name="VariableDeclarationUsageDistance">
+            <property name="allowedDistance" value="8"/>
+        </module>
         <module name="CustomImportOrder">
             <property name="sortImportsInGroupAlphabetically" value="true"/>
             <property name="separateLineBetweenGroups" value="true"/>
@@ -221,17 +238,10 @@
                       value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF, VARIABLE_DEF"/>
         </module>
         <module name="JavadocMethod">
-            <property name="scope" value="public"/>
+            <property name="accessModifiers" value="public"/>
             <property name="allowMissingParamTags" value="true"/>
-            <property name="allowMissingThrowsTags" value="true"/>
             <property name="allowMissingReturnTag" value="true"/>
-            <property name="minLineCount" value="2"/>
             <property name="allowedAnnotations" value="Override, Test"/>
-            <property name="allowThrowsTagsForSubclasses" value="true"/>
-            <property name="allowMissingJavadoc" value="true"/>
-            <!-- Setting this property helps avoid some strange errors. For more information, see -->
-            <!-- https://stackoverflow.com/questions/27938039/unable-to-get-class-information-for-checkstyle. -->
-            <property name="suppressLoadErrors" value="true"/>
         </module>
         <module name="MethodName">
             <property name="format" value="^[a-z][a-z0-9][a-zA-Z0-9_]*$"/>

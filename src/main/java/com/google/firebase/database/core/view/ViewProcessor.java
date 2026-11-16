@@ -44,16 +44,16 @@ public class ViewProcessor {
   /** An implementation of CompleteChildSource that never returns any additional children */
   private static final NodeFilter.CompleteChildSource NO_COMPLETE_SOURCE =
       new NodeFilter.CompleteChildSource() {
-    @Override
-    public Node getCompleteChild(ChildKey childKey) {
-      return null;
-    }
+        @Override
+        public Node getCompleteChild(ChildKey childKey) {
+          return null;
+        }
 
-    @Override
-    public NamedNode getChildAfterChild(Index index, NamedNode child, boolean reverse) {
-      return null;
-    }
-  };
+        @Override
+        public NamedNode getChildAfterChild(Index index, NamedNode child, boolean reverse) {
+          return null;
+        }
+      };
 
   private final NodeFilter filter;
 
@@ -73,8 +73,7 @@ public class ViewProcessor {
     ChildChangeAccumulator accumulator = new ChildChangeAccumulator();
     ViewCache newViewCache;
     switch (operation.getType()) {
-      case Overwrite:
-      {
+      case Overwrite: {
         Overwrite overwrite = (Overwrite) operation;
         if (overwrite.getSource().isFromUser()) {
           newViewCache =
@@ -108,8 +107,7 @@ public class ViewProcessor {
         }
         break;
       }
-      case Merge:
-      {
+      case Merge: {
         Merge merge = (Merge) operation;
         if (merge.getSource().isFromUser()) {
           newViewCache =
@@ -138,8 +136,7 @@ public class ViewProcessor {
         }
         break;
       }
-      case AckUserWrite:
-      {
+      case AckUserWrite: {
         AckUserWrite ackUserWrite = (AckUserWrite) operation;
         if (!ackUserWrite.isRevert()) {
           newViewCache =
@@ -161,14 +158,12 @@ public class ViewProcessor {
         }
         break;
       }
-      case ListenComplete:
-      {
+      case ListenComplete: {
         newViewCache =
             this.listenComplete(oldViewCache, operation.getPath(), writesCache, accumulator);
         break;
       }
-      default:
-      {
+      default: {
         throw new AssertionError("Unknown operation: " + operation.getType());
       }
     }

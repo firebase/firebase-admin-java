@@ -192,7 +192,7 @@ public class ListTenantsPage implements Page<Tenant> {
   interface TenantSource {
     @NonNull
     ListTenantsResponse fetch(int maxResults, String pageToken)
-      throws FirebaseAuthException;
+        throws FirebaseAuthException;
   }
 
   static class DefaultTenantSource implements TenantSource {

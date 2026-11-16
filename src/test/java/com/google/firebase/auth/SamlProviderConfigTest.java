@@ -223,14 +223,14 @@ public class SamlProviderConfigTest {
     SamlProviderConfig.UpdateRequest updateRequest =
         new SamlProviderConfig.UpdateRequest("saml.provider-id");
     updateRequest
-      .setDisplayName("DISPLAY_NAME")
-      .setEnabled(false)
-      .setIdpEntityId("IDP_ENTITY_ID")
-      .setSsoUrl("https://example.com/login")
-      .addX509Certificate("certificate1")
-      .addX509Certificate("certificate2")
-      .setRpEntityId("RP_ENTITY_ID")
-      .setCallbackUrl("https://projectId.firebaseapp.com/__/auth/handler");
+        .setDisplayName("DISPLAY_NAME")
+        .setEnabled(false)
+        .setIdpEntityId("IDP_ENTITY_ID")
+        .setSsoUrl("https://example.com/login")
+        .addX509Certificate("certificate1")
+        .addX509Certificate("certificate2")
+        .setRpEntityId("RP_ENTITY_ID")
+        .setCallbackUrl("https://projectId.firebaseapp.com/__/auth/handler");
 
     Map<String,Object> properties = updateRequest.getProperties();
     assertEquals(4, properties.size());
@@ -260,9 +260,9 @@ public class SamlProviderConfigTest {
     SamlProviderConfig.UpdateRequest updateRequest =
         new SamlProviderConfig.UpdateRequest("saml.provider-id");
     updateRequest
-      .addX509Certificate("certificate1")
-      .addAllX509Certificates(ImmutableList.of("certificate2", "certificate3"))
-      .addX509Certificate("certificate4");
+        .addX509Certificate("certificate1")
+        .addAllX509Certificates(ImmutableList.of("certificate2", "certificate3"))
+        .addX509Certificate("certificate4");
 
     Map<String,Object> properties = updateRequest.getProperties();
     assertEquals(1, properties.size());

@@ -22,7 +22,7 @@ import com.google.firebase.internal.NonNull;
 /**
  * Used for looking up an account by uid.
  *
- * @see {FirebaseAuth#getUsers}
+ * @see FirebaseAuth#getUsers
  */
 public final class UidIdentifier extends UserIdentifier {
   private final String uid;

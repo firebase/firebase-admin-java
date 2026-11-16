@@ -22,7 +22,7 @@ import com.google.firebase.internal.NonNull;
 /**
  * Used for looking up an account by email.
  *
- * @see {FirebaseAuth#getUsers}
+ * @see FirebaseAuth#getUsers
  */
 public final class EmailIdentifier extends UserIdentifier {
   private final String email;
