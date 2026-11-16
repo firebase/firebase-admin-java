@@ -23,6 +23,7 @@ import com.google.common.base.Strings;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 
 final class RemoteConfigUtil {
@@ -53,7 +54,7 @@ final class RemoteConfigUtil {
   static String convertToUtcZuluFormat(long millis) {
     // sample output date string: 2020-11-12T22:12:02.000000000Z
     checkArgument(millis >= 0, "Milliseconds duration must not be negative");
-    SimpleDateFormat dateFormat = new SimpleDateFormat(ZULU_DATE_PATTERN);
+    SimpleDateFormat dateFormat = new SimpleDateFormat(ZULU_DATE_PATTERN, Locale.ENGLISH);
     dateFormat.setTimeZone(UTC_TIME_ZONE);
     return dateFormat.format(new Date(millis));
   }
@@ -61,7 +62,7 @@ final class RemoteConfigUtil {
   static String convertToUtcDateFormat(long millis) {
     // sample output date string: Tue, 08 Dec 2020 15:49:51 GMT
     checkArgument(millis >= 0, "Milliseconds duration must not be negative");
-    SimpleDateFormat dateFormat = new SimpleDateFormat(UTC_DATE_PATTERN);
+    SimpleDateFormat dateFormat = new SimpleDateFormat(UTC_DATE_PATTERN, Locale.ENGLISH);
     dateFormat.setTimeZone(UTC_TIME_ZONE);
     return dateFormat.format(new Date(millis));
   }
@@ -78,7 +79,8 @@ final class RemoteConfigUtil {
     if (indexOfPeriod != -1) {
       dateString = dateString.substring(0, indexOfPeriod);
     }
-    SimpleDateFormat dateFormat = new SimpleDateFormat(ZULU_DATE_NO_FRAC_SECS_PATTERN);
+    SimpleDateFormat dateFormat =
+            new SimpleDateFormat(ZULU_DATE_NO_FRAC_SECS_PATTERN, Locale.ENGLISH);
     dateFormat.setTimeZone(UTC_TIME_ZONE);
     return dateFormat.parse(dateString).getTime();
   }
@@ -86,7 +88,7 @@ final class RemoteConfigUtil {
   static long convertFromUtcDateFormat(String dateString) throws ParseException {
     // sample input date string: Tue, 08 Dec 2020 15:49:51 GMT
     checkArgument(!Strings.isNullOrEmpty(dateString), "Date string must not be null or empty");
-    SimpleDateFormat dateFormat = new SimpleDateFormat(UTC_DATE_PATTERN);
+    SimpleDateFormat dateFormat = new SimpleDateFormat(UTC_DATE_PATTERN, Locale.ENGLISH);
     dateFormat.setTimeZone(UTC_TIME_ZONE);
     return dateFormat.parse(dateString).getTime();
   }
