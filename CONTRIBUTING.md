@@ -239,7 +239,7 @@ source code and accepts a set of [Clearsilver](http://www.clearsilver.net/) temp
 parameter. You can trigger this Maven profile by running the following command:
 
 ```
-mvn site -Ddevsite.template=path/to/templates/directory/ -Ddoclava.jar=path/to/doclet_jdk17.jar
+mvn site -Ddevsite.template=path/to/templates/directory/ -Ddoclava.jar=path/to/doclet.jar
 ```
 
 This command will place the generated API docs in the `target/apidocs` directory.
