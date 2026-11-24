@@ -86,6 +86,7 @@ public final class FirebaseOptions {
   private final JsonFactory jsonFactory;
   private final ThreadManager threadManager;
   private final FirestoreOptions firestoreOptions;
+  private final boolean retryEnabled;
 
   private FirebaseOptions(@NonNull final FirebaseOptions.Builder builder) {
     this.databaseUrl = builder.databaseUrl;
@@ -116,6 +117,7 @@ public final class FirebaseOptions {
     checkArgument(builder.writeTimeout >= 0);
     this.writeTimeout = builder.writeTimeout;
     this.firestoreOptions = builder.firestoreOptions;
+    this.retryEnabled = builder.retryEnabled;
   }
 
   /**
@@ -228,6 +230,15 @@ public final class FirebaseOptions {
   }
 
   /**
+   * Returns whether automatic retries are enabled for HTTP requests.
+   *
+   * @return true if retries are enabled, and false otherwise.
+   */
+  public boolean isRetryEnabled() {
+    return retryEnabled;
+  }
+
+  /**
    * Creates an empty builder.
    *
    * @return A new builder instance.
@@ -272,6 +283,7 @@ public final class FirebaseOptions {
     private int connectTimeout;
     private int readTimeout;
     private int writeTimeout;
+    private boolean retryEnabled = true;
 
     /**
      * Constructs an empty builder.
@@ -518,6 +530,17 @@ public final class FirebaseOptions {
      */
     public Builder setWriteTimeout(int writeTimeout) {
       this.writeTimeout = writeTimeout;
+      return this;
+    }
+
+    /**
+     * Enables or disables automatic retries for HTTP requests. By default, retries are enabled.
+     *
+     * @param retryEnabled Whether to enable automatic retries (default: true).
+     * @return This {@code Builder} instance is returned so subsequent calls can be chained.
+     */
+    public Builder setRetryEnabled(boolean retryEnabled) {
+      this.retryEnabled = retryEnabled;
       return this;
     }
 
