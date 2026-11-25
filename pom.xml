@@ -120,6 +120,7 @@
                             <useStandardDocletOptions>false</useStandardDocletOptions>
                             <disableNoFonts>true</disableNoFonts>
                             <additionalJOptions>
+                                <additionalJOption>-J-Xmx1024m</additionalJOption>
                                 <additionalJOption>-J--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</additionalJOption>
                                 <additionalJOption>-J--add-exports=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</additionalJOption>
                                 <additionalJOption>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</additionalJOption>
@@ -144,7 +145,7 @@
                                 <configuration>
                                     <target>
                                         <echo message="Updating relative links in API docs" />
-                                        <replace dir="${project.build.directory}/apidocs" token="href=&quot;reference" value="href=&quot;/docs/reference/admin/java/reference" />
+                                        <replace dir="${project.build.directory}/apidocs" token="href=&quot;reference/" value="href=&quot;/docs/reference/admin/java/reference/" />
                                     </target>
                                 </configuration>
                             </execution>
