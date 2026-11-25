@@ -22,7 +22,7 @@ import com.google.firebase.internal.NonNull;
 /**
  * Used for looking up an account by phone number.
  *
- * @see {FirebaseAuth#getUsers}
+ * @see FirebaseAuth#getUsers
  */
 public final class PhoneIdentifier extends UserIdentifier {
   private final String phoneNumber;

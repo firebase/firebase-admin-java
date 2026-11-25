@@ -186,7 +186,7 @@ public class ErrorHandlingHttpClientTest {
   @Test
   public void testNetworkError() {
     final IOException exception = new IOException("Test");
-    MockHttpTransport transport = new MockHttpTransport(){
+    MockHttpTransport transport = new MockHttpTransport() {
       @Override
       public LowLevelHttpRequest buildRequest(String method, String url) throws IOException {
         throw exception;

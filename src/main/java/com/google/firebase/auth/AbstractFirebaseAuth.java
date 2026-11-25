@@ -1448,13 +1448,13 @@ public abstract class AbstractFirebaseAuth {
     final DefaultOidcProviderConfigSource source = new DefaultOidcProviderConfigSource(userManager);
     final ListProviderConfigsPage.Factory<OidcProviderConfig> factory =
         new ListProviderConfigsPage.Factory<OidcProviderConfig>(source, maxResults, pageToken);
-    return
-      new CallableOperation<ListProviderConfigsPage<OidcProviderConfig>, FirebaseAuthException>() {
-        @Override
-        protected ListProviderConfigsPage<OidcProviderConfig> execute()
-            throws FirebaseAuthException {
-          return factory.create();
-        }
+    return new CallableOperation<
+        ListProviderConfigsPage<OidcProviderConfig>, FirebaseAuthException>() {
+      @Override
+      protected ListProviderConfigsPage<OidcProviderConfig> execute()
+          throws FirebaseAuthException {
+        return factory.create();
+      }
     };
   }
 
@@ -1706,13 +1706,13 @@ public abstract class AbstractFirebaseAuth {
     final DefaultSamlProviderConfigSource source = new DefaultSamlProviderConfigSource(userManager);
     final ListProviderConfigsPage.Factory<SamlProviderConfig> factory =
         new ListProviderConfigsPage.Factory<SamlProviderConfig>(source, maxResults, pageToken);
-    return
-      new CallableOperation<ListProviderConfigsPage<SamlProviderConfig>, FirebaseAuthException>() {
-        @Override
-        protected ListProviderConfigsPage<SamlProviderConfig> execute()
-            throws FirebaseAuthException {
-          return factory.create();
-        }
+    return new CallableOperation<
+        ListProviderConfigsPage<SamlProviderConfig>, FirebaseAuthException>() {
+      @Override
+      protected ListProviderConfigsPage<SamlProviderConfig> execute()
+          throws FirebaseAuthException {
+        return factory.create();
+      }
     };
   }
 

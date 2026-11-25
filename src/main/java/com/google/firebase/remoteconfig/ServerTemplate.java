@@ -24,21 +24,24 @@ public interface ServerTemplate {
     Builder defaultConfig(KeysAndValues config);
 
     Builder cachedTemplate(String templateJson);
-    
+
     ServerTemplate build();
   }
+
   /**
-  * Process the template data with a condition evaluator 
-  * based on the provided context. 
-  */
+   * Process the template data with a condition evaluator
+   * based on the provided context.
+   */
   ServerConfig evaluate(KeysAndValues context) throws FirebaseRemoteConfigException;
+
   /**
-  * Process the template data without context.
-  */
+   * Process the template data without context.
+   */
   ServerConfig evaluate() throws FirebaseRemoteConfigException;
+
   /**
-  * Fetches and caches the current active version of the project.
-  */
+   * Fetches and caches the current active version of the project.
+   */
   ApiFuture<Void> load() throws FirebaseRemoteConfigException;
 
   String toJson();
