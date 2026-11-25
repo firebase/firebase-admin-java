@@ -29,6 +29,7 @@ import com.google.firebase.messaging.AndroidConfig.Priority;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1032,6 +1033,235 @@ public class MessageTest {
         .build();
     assertJsonEquals(ImmutableMap.of(
         "topic", "test-topic", "notification", notification, "android", androidConfig), message);
+  }
+
+  @Test
+  public void testAndroidV2BackgroundSync() throws IOException {
+    AndroidBackgroundSyncMessage backgroundSync = AndroidBackgroundSyncMessage.builder().build();
+    AndroidConfigV2 config = AndroidConfigV2.builder()
+        .setCollapseKey("sync-key")
+        .setTtl(Duration.ofSeconds(10))
+        .setBackgroundSync(backgroundSync)
+        .build();
+    Message message = Message.builder()
+        .setAndroidConfigV2(config)
+        .setTopic("test-topic")
+        .build();
+    Map<String, Object> expected = ImmutableMap.of(
+        "topic", "test-topic",
+        "androidV2", ImmutableMap.of(
+            "collapse_key", "sync-key",
+            "ttl", "10s",
+            "background_sync", ImmutableMap.of()
+        )
+    );
+    assertJsonEquals(expected, message);
+  }
+
+  @Test
+  public void testAndroidV2RemoteNotification() throws IOException {
+    AndroidNotificationV2 notification = AndroidNotificationV2.builder()
+        .setTitle("title")
+        .setBody("body")
+        .setIcon("icon")
+        .setColor("#336699")
+        .setSound("sound")
+        .setTag("tag")
+        .setClickAction("click_action")
+        .setBodyLocalizationKey("body_loc_key")
+        .addBodyLocalizationArg("body_loc_arg")
+        .setTitleLocalizationKey("title_loc_key")
+        .addTitleLocalizationArg("title_loc_arg")
+        .setChannelId("channel_id")
+        .setImage(TEST_IMAGE_URL_ANDROID)
+        .setTicker("ticker")
+        .setSticky(true)
+        .setEventTimeInMillis(1783533600000L)
+        .setLocalOnly(true)
+        .setNotificationPriority(AndroidNotificationV2.NotificationPriority.HIGH)
+        .setDefaultSound(true)
+        .setDefaultVibrateTimings(false)
+        .setVibrateTimingsInMillis(new long[]{1000L, 500L})
+        .setDefaultLightSettings(true)
+        .setLightSettings(LightSettings.builder()
+            .setColorFromString("#336699")
+            .setLightOnDurationInMillis(100)
+            .setLightOffDurationInMillis(200)
+            .build())
+        .setVisibility(AndroidNotificationV2.Visibility.PUBLIC)
+        .setNotificationCount(5)
+        .setId(12345)
+        .build();
+
+    AndroidRemoteNotification remoteNotification = AndroidRemoteNotification.builder()
+        .setMutableContent(true)
+        .setNotification(notification)
+        .setUseAsV1DataMessage(true)
+        .build();
+
+    AndroidConfigV2 config = AndroidConfigV2.builder()
+        .setRemoteNotification(remoteNotification)
+        .build();
+
+    Message message = Message.builder()
+        .setAndroidConfigV2(config)
+        .setTopic("test-topic")
+        .build();
+
+    Map<String, Object> expected = ImmutableMap.of(
+        "topic", "test-topic",
+        "androidV2", ImmutableMap.of(
+            "remote_notification", ImmutableMap.of(
+                "mutable_content", true,
+                "use_as_v1_data_message", true,
+                "notification", ImmutableMap.builder()
+                    .put("title", "title")
+                    .put("body", "body")
+                    .put("icon", "icon")
+                    .put("color", "#336699")
+                    .put("sound", "sound")
+                    .put("tag", "tag")
+                    .put("click_action", "click_action")
+                    .put("body_loc_key", "body_loc_key")
+                    .put("body_loc_args", ImmutableList.of("body_loc_arg"))
+                    .put("title_loc_key", "title_loc_key")
+                    .put("title_loc_args", ImmutableList.of("title_loc_arg"))
+                    .put("channel_id", "channel_id")
+                    .put("image", TEST_IMAGE_URL_ANDROID)
+                    .put("ticker", "ticker")
+                    .put("sticky", true)
+                    .put("event_time", "2026-07-08T18:00:00.000000000Z")
+                    .put("local_only", true)
+                    .put("notification_priority", "PRIORITY_HIGH")
+                    .put("default_sound", true)
+                    .put("default_vibrate_timings", false)
+                    .put("vibrate_timings", ImmutableList.of("1s", "0.500000000s"))
+                    .put("default_light_settings", true)
+                    .put("light_settings", ImmutableMap.of(
+                        "color", ImmutableMap.of(
+                            "red", new BigDecimal(new BigInteger("2"), 1),
+                            "green", new BigDecimal(new BigInteger("4"), 1),
+                            "blue", new BigDecimal(new BigInteger("6"), 1),
+                            "alpha", new BigDecimal(new BigInteger("10"), 1)
+                        ),
+                        "light_on_duration", "0.100000000s",
+                        "light_off_duration", "0.200000000s"
+                    ))
+                    .put("visibility", "public")
+                    .put("notification_count", new BigDecimal(5))
+                    .put("id", new BigDecimal(12345))
+                    .build()
+            )
+        )
+    );
+
+    assertJsonEquals(expected, message);
+  }
+
+  @Test
+  public void testMutualExclusivityAndroidV1AndV2() {
+    AndroidConfig v1 = AndroidConfig.builder().build();
+    AndroidConfigV2 v2 = AndroidConfigV2.builder()
+        .setBackgroundSync(AndroidBackgroundSyncMessage.builder().build())
+        .build();
+    try {
+      Message.builder()
+          .setAndroidConfig(v1)
+          .setAndroidConfigV2(v2)
+          .setTopic("test-topic")
+          .build();
+      fail("No error thrown when both android and androidV2 are set");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("android and androidV2 are mutually exclusive", expected.getMessage());
+    }
+  }
+
+  @Test
+  public void testMutualExclusivityRemoteNotificationAndBackgroundSync() {
+    AndroidRemoteNotification remoteNotification = AndroidRemoteNotification.builder()
+        .setNotification(AndroidNotificationV2.builder().build())
+        .build();
+    AndroidBackgroundSyncMessage backgroundSync = AndroidBackgroundSyncMessage.builder().build();
+    try {
+      AndroidConfigV2.builder()
+          .setRemoteNotification(remoteNotification)
+          .setBackgroundSync(backgroundSync)
+          .build();
+      fail("No error thrown when both remoteNotification and backgroundSync are set");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Exactly one of remoteNotification or backgroundSync must be specified",
+          expected.getMessage());
+    }
+  }
+
+  @Test
+  public void testTtlMustNotBeNegative() {
+    try {
+      AndroidConfigV2.builder()
+          .setTtl(Duration.ofSeconds(-1))
+          .setBackgroundSync(AndroidBackgroundSyncMessage.builder().build())
+          .build();
+      fail("No error thrown for negative TTL");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testAndroidNotificationV2WithNegativeCount() {
+    try {
+      AndroidNotificationV2.builder().setNotificationCount(-1).build();
+      fail("No error thrown for negative notification count");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("notificationCount if specified must be zero or positive valued",
+          expected.getMessage());
+    }
+  }
+
+  @Test
+  public void testInvalidAndroidNotificationV2() {
+    List<AndroidNotificationV2.Builder> notificationBuilders = ImmutableList.of(
+        AndroidNotificationV2.builder().setColor(""),
+        AndroidNotificationV2.builder().setColor("foo"),
+        AndroidNotificationV2.builder().setColor("123"),
+        AndroidNotificationV2.builder().setColor("#AABBCK"),
+        AndroidNotificationV2.builder().addBodyLocalizationArg("foo"),
+        AndroidNotificationV2.builder().addTitleLocalizationArg("foo")
+    );
+    for (int i = 0; i < notificationBuilders.size(); i++) {
+      try {
+        notificationBuilders.get(i).build();
+        fail("No error thrown for invalid notification V2: " + i);
+      } catch (IllegalArgumentException expected) {
+        // expected
+      }
+    }
+  }
+
+  @Test
+  public void testAndroidNotificationV2WithNegativeVibrateTimings() {
+    try {
+      AndroidNotificationV2.builder().setVibrateTimingsInMillis(new long[]{1000L, -100L});
+      fail("No error thrown for negative vibrate timing");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("elements in vibrateTimingsInMillis must not be negative",
+          expected.getMessage());
+    }
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testAndroidNotificationV2WithNullVibrateTimings() {
+    AndroidNotificationV2.builder().setVibrateTimingsInMillis(null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testAndroidNotificationV2WithNullBodyLocArgs() {
+    AndroidNotificationV2.builder().addAllBodyLocalizationArgs(null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testAndroidNotificationV2WithNullTitleLocArgs() {
+    AndroidNotificationV2.builder().addAllTitleLocalizationArgs(null);
   }
 
   private static void assertJsonEquals(
