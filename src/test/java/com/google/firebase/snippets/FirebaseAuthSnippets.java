@@ -597,8 +597,9 @@ public class FirebaseAuthSnippets {
       List<ImportUserRecord> users = Collections.singletonList(ImportUserRecord.builder()
           .setUid("some-uid")
           .setEmail("user@example.com")
-          .setPasswordHash("password-hash".getBytes())
-          .setPasswordSalt("salt".getBytes())
+          .setEmailVerified(true)
+          .setPasswordSalt(Base64.getDecoder().decode("VERvRWRsRklaVERQckJzUg")) // Provide the password salt only
+          .setPasswordHash(Base64.getDecoder().decode("dYpfJgmRyTZefxRiToYFpO+4PyaHPsHIKz5VI/FE06w")) // Provide the password key only
           .build());
       UserImportOptions options = UserImportOptions.withHash(
           Argon2.builder()
